@@ -1,8 +1,13 @@
+require 'yaml'
+
 class Game
 
 	attr_accessor :solution
+	attr_reader :name, :time
 
 	def initialize
+		@time = Time.now
+		@paused = false
 		@dictionary = File.readlines("5desk.txt")
 		@hint = ""
 		clean_dictionary
@@ -33,7 +38,7 @@ class Game
 
 	def check_answer
 		if @guess == @solution
-			@hint == @solution
+			@hint = @solution
 		else
 			@guesses_left -= 1
 			puts "wrong answer!"
@@ -56,9 +61,15 @@ class Game
 	end
 
 	def save_game
-		# Save current game object to a file
-		# Stop game loop
-		# Go back to program controls (outside game class)
+		Dir.mkdir("games") unless Dir.exists? "games"
+		filename = "Player_#{@name}_Started_#{@time.day}-#{@time.month},#{@time.hour}:#{@time.min}"
+		
+		yaml = YAML::dump(self)
+
+		File.open("games/#{filename}", "w") do |file|
+			file.puts yaml
+		end
+		@paused = true
 	end
 
 	def display_game_state
@@ -69,7 +80,7 @@ class Game
 
 	def turn
 		display_game_state
-		puts "Make a guess or type save to save game"
+		puts "Make a guess or type 'save' to save game"
 		@guess = gets.chomp
 		if @guess == "save"
 			save_game
@@ -92,20 +103,12 @@ class Game
 		won? || lost?
 	end
 
-
+	def game_paused?
+		@paused
+	end
 
 end
 
-
-game = Game.new
-until game.game_over?
-	game.turn
-end
-if game.won?
-	puts "#{game.solution}! Congratulations, you guessed the word!"
-else
-	puts "You are out of guesses! The secret word was '#{game.solution}'"
-end
 
 
 
